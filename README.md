@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # os_project
 
 A new Flutter project.
@@ -112,4 +111,3 @@ Clean architecture with separate models, widgets, and utilities
 
 This comprehensive tool transforms abstract CPU scheduling concepts into tangible, visual experiences, making learning both engaging and effective!
 
->>>>>>> 019a0d096ba1e393f6c2c8e7cdd962c8583633dd
