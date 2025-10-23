@@ -98,61 +98,60 @@ class _HomePageState extends State<HomePage> {
                 child: const Text('Go', style: TextStyle(fontSize: 18)),
               ),
             ),
-            // Result Display
-            // Result Display
-            // Result Display
-if (showResult && selectedAlgorithm == AlgorithmType.fcfs)
-  Column(
-    children: [
-      // CPU Scheduling Table
-      CpuSchedulingTable(
-        processes: processes,
-        resultBlocks: resultBlocks,
-      ),
-      const SizedBox(height: 24),
-      
-      // Original Result Display
-      ResultDisplay(
-        resultBlocks: resultBlocks,
-        animationProgress: animationProgress,
-        currentTimer: currentTimer,
-      ),
-      const SizedBox(height: 24),
-      
-      // Gantt Chart
-      GanttChartWidget(resultBlocks: resultBlocks),
-      const SizedBox(height: 24),
-      
-      // Bar Chart
-      BarChartWidget(
-        processes: processes,
-        resultBlocks: resultBlocks,
-      ),
-      const SizedBox(height: 24),
-      
-      // Line Chart (NEW)
-      LineChartWidget(
-        processes: processes,
-        resultBlocks: resultBlocks,
-      ),
-    ],
-  )
-else if (showResult)
-  Column(
-    children: [
-      CpuSchedulingTable(
-        processes: processes,
-        resultBlocks: resultBlocks,
-      ),
-      const SizedBox(height: 24),
-      ResultDisplay(
-        resultBlocks: resultBlocks,
-        animationProgress: animationProgress,
-        currentTimer: currentTimer,
-      ),
-    ],
-  ),
+            // Result Display - Show for FCFS and SJF
+            if (showResult &&
+                (selectedAlgorithm == AlgorithmType.fcfs ||
+                    selectedAlgorithm == AlgorithmType.sjf))
+              Column(
+                children: [
+                  // CPU Scheduling Table
+                  CpuSchedulingTable(
+                    processes: processes,
+                    resultBlocks: resultBlocks,
+                  ),
+                  const SizedBox(height: 24),
 
+                  // Original Result Display
+                  ResultDisplay(
+                    resultBlocks: resultBlocks,
+                    animationProgress: animationProgress,
+                    currentTimer: currentTimer,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Gantt Chart
+                  GanttChartWidget(resultBlocks: resultBlocks),
+                  const SizedBox(height: 24),
+
+                  // Bar Chart
+                  BarChartWidget(
+                    processes: processes,
+                    resultBlocks: resultBlocks,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Line Chart
+                  LineChartWidget(
+                    processes: processes,
+                    resultBlocks: resultBlocks,
+                  ),
+                ],
+              )
+            else if (showResult)
+              Column(
+                children: [
+                  CpuSchedulingTable(
+                    processes: processes,
+                    resultBlocks: resultBlocks,
+                  ),
+                  const SizedBox(height: 24),
+                  ResultDisplay(
+                    resultBlocks: resultBlocks,
+                    animationProgress: animationProgress,
+                    currentTimer: currentTimer,
+                  ),
+                ],
+              ),
           ],
         ),
       ),

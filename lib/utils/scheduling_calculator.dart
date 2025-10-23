@@ -1,5 +1,4 @@
 import 'package:os_project/models/algorithim_type.dart';
-
 import '../models/process_model.dart';
 
 class SchedulingCalculator {
@@ -55,67 +54,140 @@ class SchedulingCalculator {
           // Add idle time ONLY if CPU is actually idle (currentTime < arrivalTime)
           if (currentTime < process.arrivalTime) {
             int idleTime = process.arrivalTime - currentTime;
-            blocks.add(ResultBlock(
-              processId: -1, // -1 indicates idle time
-              duration: idleTime,
-            ));
+            blocks.add(
+              ResultBlock(
+                processId: -1, // -1 indicates idle time
+                duration: idleTime,
+              ),
+            );
             currentTime = process.arrivalTime;
           }
 
           // Add process execution
-          blocks.add(ResultBlock(
-            processId: process.id,
-            duration: process.executeTime,
-          ));
+          blocks.add(
+            ResultBlock(processId: process.id, duration: process.executeTime),
+          );
           currentTime += process.executeTime;
         }
         break;
 
       case AlgorithmType.sjf:
-        List<Process> sortedProcesses = List.from(processes);
-        sortedProcesses.sort((a, b) {
-          if (a.executeTime == b.executeTime) {
-            return a.arrivalTime.compareTo(b.arrivalTime);
-          }
-          return a.executeTime.compareTo(b.executeTime);
-        });
+        {
+          List<Process> allProcesses = List.from(processes);
+          List<bool> completed = List.filled(allProcesses.length, false);
+          int currentTime = 0;
+          int completedCount = 0;
 
-        int currentTime = 0;
-        for (var process in sortedProcesses) {
-          if (currentTime < process.arrivalTime) {
-            currentTime = process.arrivalTime;
-          }
+          while (completedCount < allProcesses.length) {
+            // Select from available (arrived & not completed) the one with min burst time
+            int idxReady = -1;
+            int minBT = 1 << 30; // Large number
 
-          blocks.add(ResultBlock(
-            processId: process.id,
-            duration: process.executeTime,
-          ));
-          currentTime += process.executeTime;
+            for (int i = 0; i < allProcesses.length; i++) {
+              var p = allProcesses[i];
+              if (!completed[i] && p.arrivalTime <= currentTime) {
+                if (p.executeTime < minBT) {
+                  minBT = p.executeTime;
+                  idxReady = i;
+                }
+              }
+            }
+
+            if (idxReady == -1) {
+              // CPU idle, find next arriving process
+              int nextArrival = double.maxFinite.toInt();
+              for (int i = 0; i < allProcesses.length; i++) {
+                if (!completed[i] && allProcesses[i].arrivalTime > currentTime) {
+                  if (allProcesses[i].arrivalTime < nextArrival) {
+                    nextArrival = allProcesses[i].arrivalTime;
+                  }
+                }
+              }
+
+              if (nextArrival != double.maxFinite.toInt()) {
+                blocks.add(
+                  ResultBlock(
+                    processId: -1,
+                    duration: nextArrival - currentTime,
+                  ),
+                );
+                currentTime = nextArrival;
+              }
+              continue;
+            }
+
+            var selected = allProcesses[idxReady];
+            blocks.add(
+              ResultBlock(
+                processId: selected.id,
+                duration: selected.executeTime,
+              ),
+            );
+            currentTime += selected.executeTime;
+            completed[idxReady] = true;
+            completedCount++;
+          }
+          break;
         }
-        break;
 
       case AlgorithmType.priority:
-        List<Process> sortedProcesses = List.from(processes);
-        sortedProcesses.sort((a, b) {
-          if (a.priority == b.priority) {
-            return a.arrivalTime.compareTo(b.arrivalTime);
-          }
-          return b.priority.compareTo(a.priority);
-        });
+        {
+          List<Process> allProcesses = List.from(processes);
+          List<bool> completed = List.filled(allProcesses.length, false);
+          int currentTime = 0;
+          int completedCount = 0;
 
-        int currentTime = 0;
-        for (var process in sortedProcesses) {
-          if (currentTime < process.arrivalTime) {
-            currentTime = process.arrivalTime;
-          }
+          while (completedCount < allProcesses.length) {
+            // Select from available (arrived & not completed) the one with highest priority
+            int idxReady = -1;
+            int maxPriority = -1;
 
-          blocks.add(ResultBlock(
-            processId: process.id,
-            duration: process.executeTime,
-          ));
-          currentTime += process.executeTime;
+            for (int i = 0; i < allProcesses.length; i++) {
+              var p = allProcesses[i];
+              if (!completed[i] && p.arrivalTime <= currentTime) {
+                if (p.priority > maxPriority) {
+                  maxPriority = p.priority;
+                  idxReady = i;
+                }
+              }
+            }
+
+            if (idxReady == -1) {
+              // CPU idle, find next arriving process
+              int nextArrival = double.maxFinite.toInt();
+              for (int i = 0; i < allProcesses.length; i++) {
+                if (!completed[i] && allProcesses[i].arrivalTime > currentTime) {
+                  if (allProcesses[i].arrivalTime < nextArrival) {
+                    nextArrival = allProcesses[i].arrivalTime;
+                  }
+                }
+              }
+
+              if (nextArrival != double.maxFinite.toInt()) {
+                blocks.add(
+                  ResultBlock(
+                    processId: -1,
+                    duration: nextArrival - currentTime,
+                  ),
+                );
+                currentTime = nextArrival;
+              }
+              continue;
+            }
+
+            var selected = allProcesses[idxReady];
+            blocks.add(
+              ResultBlock(
+                processId: selected.id,
+                duration: selected.executeTime,
+              ),
+            );
+            currentTime += selected.executeTime;
+            completed[idxReady] = true;
+            completedCount++;
+          }
+          break;
         }
-        break;
 
       case AlgorithmType.robin:
         List<Process> sortedByArrival = List.from(processes);
@@ -129,14 +201,15 @@ class SchedulingCalculator {
           allDone = true;
           for (int i = 0; i < sortedByArrival.length; i++) {
             if (remainingTimes[i] > 0) {
-              int executionTime = remainingTimes[i] > quantum
-                  ? quantum
-                  : remainingTimes[i];
+              int executionTime =
+                  remainingTimes[i] > quantum ? quantum : remainingTimes[i];
 
-              blocks.add(ResultBlock(
-                processId: sortedByArrival[i].id,
-                duration: executionTime,
-              ));
+              blocks.add(
+                ResultBlock(
+                  processId: sortedByArrival[i].id,
+                  duration: executionTime,
+                ),
+              );
 
               remainingTimes[i] -= executionTime;
               allDone = false;
