@@ -12,8 +12,13 @@ class GanttChartWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF2D2D2D),
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -22,9 +27,10 @@ class GanttChartWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: _buildGanttChart(),
@@ -47,63 +53,124 @@ class GanttChartWidget extends StatelessWidget {
       endTimes.add(currentTime);
     }
 
-    return Table(
-      border: TableBorder.all(color: Colors.black),
-      defaultColumnWidth: const IntrinsicColumnWidth(),
-      children: [
-        // First row: CPU Idle (start times)
-        TableRow(
-          children: [
-            _buildHeaderCell('CPU Idle'),
-            ...startTimes.map((time) => _buildTimeCell(time.toString())),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF404040),
+          width: 1,
         ),
-        // Second row: CPU Idle (end times)
-        TableRow(
-          children: [
-            _buildHeaderCell('CPU Idle'),
-            ...endTimes.map((time) => _buildTimeCell(time.toString())),
-          ],
+      ),
+      child: Table(
+        border: TableBorder.symmetric(
+          inside: const BorderSide(
+            color: Color(0xFF404040),
+            width: 1,
+          ),
         ),
-        // Third row: Process blocks
-        TableRow(
-          children: [
-            Container(), // Empty cell for alignment
-            ...resultBlocks.map((block) {
-              if (block.processId == -1) {
-                return _buildProcessCell('IDLE', block.duration, Colors.white, isIdle: true);
-              }
-              return _buildProcessCell(
-                'P${block.processId}',
-                block.duration,
-                _getProcessColor(block.processId),
-              );
-            }),
-          ],
-        ),
-        // Fourth row: Durations
-        TableRow(
-          children: [
-            Container(), // Empty cell for alignment
-            ...resultBlocks.map((block) => _buildTimeCell(block.duration.toString())),
-          ],
-        ),
-      ],
+        defaultColumnWidth: const IntrinsicColumnWidth(),
+        children: [
+          // First row: CPU Idle (start times)
+          TableRow(
+            children: [
+              _buildHeaderCell('CPU Idle'),
+              ...startTimes.map((time) => _buildTimeCell(time.toString())),
+            ],
+          ),
+          // Second row: CPU Idle (end times)
+          TableRow(
+            children: [
+              _buildHeaderCell('CPU Idle'),
+              ...endTimes.map((time) => _buildTimeCell(time.toString())),
+            ],
+          ),
+          // Third row: Empty spacer
+          TableRow(
+            children: [
+              Container(
+                height: 8,
+                color: const Color(0xFF1E1E1E),
+              ),
+              ...List.generate(
+                resultBlocks.length,
+                (_) => Container(
+                  height: 8,
+                  color: const Color(0xFF1E1E1E),
+                ),
+              ),
+            ],
+          ),
+          // Fourth row: Process blocks
+          TableRow(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1E1E1E),
+                ),
+              ),
+              ...resultBlocks.map((block) {
+                if (block.processId == -1) {
+                  return _buildProcessCell(
+                    'IDLE',
+                    block.duration,
+                    const Color(0xFF2A2A2A),
+                    isIdle: true,
+                  );
+                }
+                return _buildProcessCell(
+                  'P${block.processId}',
+                  block.duration,
+                  _getProcessColor(block.processId),
+                );
+              }),
+            ],
+          ),
+          // Fifth row: Empty spacer
+          TableRow(
+            children: [
+              Container(
+                height: 8,
+                color: const Color(0xFF1E1E1E),
+              ),
+              ...List.generate(
+                resultBlocks.length,
+                (_) => Container(
+                  height: 8,
+                  color: const Color(0xFF1E1E1E),
+                ),
+              ),
+            ],
+          ),
+          // Sixth row: Durations
+          TableRow(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1E1E1E),
+                ),
+              ),
+              ...resultBlocks
+                  .map((block) => _buildTimeCell(block.duration.toString())),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildHeaderCell(String text) {
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        border: Border.all(color: Colors.black),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF3A3A3A),
       ),
       child: Text(
         text,
         style: const TextStyle(
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 13,
+          color: Colors.white70,
         ),
       ),
     );
@@ -111,33 +178,40 @@ class GanttChartWidget extends StatelessWidget {
 
   Widget _buildTimeCell(String text) {
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E1E1E),
       ),
       alignment: Alignment.center,
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12),
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.white70,
+        ),
       ),
     );
   }
 
-  Widget _buildProcessCell(String label, int duration, Color color, {bool isIdle = false}) {
+  Widget _buildProcessCell(
+    String label,
+    int duration,
+    Color color, {
+    bool isIdle = false,
+  }) {
     return Container(
-      width: duration * 30.0, // Adjust width based on duration
-      padding: const EdgeInsets.all(12),
+      width: duration * 35.0,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: color,
-        border: Border.all(color: Colors.black),
       ),
       alignment: Alignment.center,
       child: Text(
         label,
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          fontSize: 12,
-          color: isIdle ? Colors.grey : Colors.black,
+          fontSize: 13,
+          color: isIdle ? Colors.white54 : Colors.white,
         ),
       ),
     );
@@ -145,14 +219,14 @@ class GanttChartWidget extends StatelessWidget {
 
   Color _getProcessColor(int processId) {
     final colors = [
-      Colors.pink.shade200,
-      Colors.green.shade300,
-      Colors.lightBlue.shade200,
-      Colors.purple.shade200,
-      Colors.red.shade200,
-      Colors.orange.shade200,
-      Colors.teal.shade200,
-      Colors.amber.shade200,
+      const Color(0xFFE91E63), // Pink
+      const Color(0xFF4CAF50), // Green
+      const Color(0xFF2196F3), // Blue
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFFFF5722), // Red-Orange
+      const Color(0xFFFF9800), // Orange
+      const Color(0xFF009688), // Teal
+      const Color(0xFFFFEB3B), // Yellow
     ];
     return colors[processId % colors.length];
   }

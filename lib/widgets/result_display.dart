@@ -20,85 +20,117 @@ class ResultDisplay extends StatelessWidget {
       children: [
         const Text(
           'Result:',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 16),
         Card(
+          color: const Color(0xFF2D2D2D),
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // Process blocks - FILTER OUT IDLE BLOCKS OR SHOW THEM CLEARLY
+                // Process blocks table
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Table(
-                    border: TableBorder.all(color: Colors.black),
-                    defaultColumnWidth: const IntrinsicColumnWidth(),
-                    children: [
-                      // Process names
-                      TableRow(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.white, Colors.grey.shade300],
-                          ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF404040),
+                        width: 1,
+                      ),
+                    ),
+                    child: Table(
+                      border: TableBorder.symmetric(
+                        inside: const BorderSide(
+                          color: Color(0xFF404040),
+                          width: 1,
                         ),
-                        children: resultBlocks.map((block) {
-                          return Container(
-                            height: 60,
-                            width: block.duration * 20.0,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: block.processId == -1 
-                                  ? Colors.white 
-                                  : _getProcessColor(block.processId),
-                            ),
-                            child: Text(
-                              block.processId == -1 
-                                  ? 'IDLE' 
-                                  : 'P${block.processId}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: block.processId == -1 
-                                    ? Colors.grey 
-                                    : Colors.black,
+                      ),
+                      defaultColumnWidth: const IntrinsicColumnWidth(),
+                      children: [
+                        // Process names row
+                        TableRow(
+                          children: resultBlocks.map((block) {
+                            return Container(
+                              height: 60,
+                              width: block.duration * 25.0,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: block.processId == -1
+                                    ? const Color(0xFF2A2A2A)
+                                    : _getProcessColor(block.processId),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      // Duration
-                      TableRow(
-                        children: resultBlocks.map((block) {
-                          return Container(
-                            height: 30,
-                            alignment: Alignment.center,
-                            child: Text('${block.duration}'),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Animation progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: SizedBox(
-                    height: 20,
-                    child: LinearProgressIndicator(
-                      value: animationProgress,
-                      backgroundColor: Colors.blue.shade100,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                              child: Text(
+                                block.processId == -1
+                                    ? 'IDLE'
+                                    : 'P${block.processId}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: block.processId == -1
+                                      ? Colors.white54
+                                      : Colors.white,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        // Duration row
+                        TableRow(
+                          children: resultBlocks.map((block) {
+                            return Container(
+                              height: 35,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1E1E1E),
+                              ),
+                              child: Text(
+                                '${block.duration}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    height: 24,
+                    child: LinearProgressIndicator(
+                      value: animationProgress,
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF2196F3),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 // Timer
                 Text(
                   'Timer: $currentTimer sec',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -111,14 +143,14 @@ class ResultDisplay extends StatelessWidget {
 
   Color _getProcessColor(int processId) {
     final colors = [
-      Colors.pink.shade200,
-      Colors.green.shade300,
-      Colors.lightBlue.shade200,
-      Colors.purple.shade200,
-      Colors.red.shade200,
-      Colors.orange.shade200,
-      Colors.teal.shade200,
-      Colors.amber.shade200,
+      const Color(0xFFE91E63), // Pink
+      const Color(0xFF4CAF50), // Green
+      const Color(0xFF2196F3), // Blue
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFFFF5722), // Red-Orange
+      const Color(0xFFFF9800), // Orange
+      const Color(0xFF009688), // Teal
+      const Color(0xFFFFEB3B), // Yellow
     ];
     return colors[processId % colors.length];
   }

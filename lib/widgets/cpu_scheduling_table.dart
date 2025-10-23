@@ -30,143 +30,56 @@ class CpuSchedulingTable extends StatelessWidget {
         calculatedTimes.length;
 
     return Card(
+      color: const Color(0xFF2D2D2D), // Dark background
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Dark themed table
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.lightBlue.shade100,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'CPU SCHEDULING TABLE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                border: TableBorder.all(color: Colors.black),
-                headingRowColor:
-                    WidgetStateProperty.all(Colors.grey.shade300),
-                columnSpacing: 10,
-                horizontalMargin: 10,
-                dataRowMinHeight: 40,
-                dataRowMaxHeight: 50,
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      'Process ID',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
+              child: Column(
+                children: [
+                  // Header Row
+                  _buildHeaderRow(),
+                  const Divider(
+                    height: 1,
+                    color: Color(0xFF404040),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'ArrivalTime',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Burst Time',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Priority',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Response Time',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'TAT',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'CT',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Waiting Time',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Indicator',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                ],
-                rows: processes.map((process) {
-                  var times = calculatedTimes[process.id]!;
-                  return DataRow(
-                    color: WidgetStateProperty.resolveWith<Color?>(
-                      (Set<WidgetState> states) {
-                        return _getProcessColor(process.id);
-                      },
-                    ),
-                    cells: [
-                      DataCell(Text('P${process.id}')),
-                      DataCell(Text('${process.arrivalTime}')),
-                      DataCell(Text('${process.executeTime}')),
-                      DataCell(Text(process.priority > 0
-                          ? '${process.priority}'
-                          : '')),
-                      DataCell(Text('${times.responseTime}')),
-                      DataCell(Text('${times.turnaroundTime}')),
-                      DataCell(Text('${times.completionTime}')),
-                      DataCell(Text('${times.waitingTime}')),
-                      DataCell(
-                        Container(
-                          width: 40,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: _getProcessColor(process.id),
-                            border: Border.all(color: Colors.black45),
-                          ),
+                  // Data Rows
+                  ...processes.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    Process process = entry.value;
+                    var times = calculatedTimes[process.id]!;
+                    
+                    return Column(
+                      children: [
+                        _buildDataRow(
+                          index + 1,
+                          process,
+                          times,
+                          index % 2 == 0,
                         ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                        if (index < processes.length - 1)
+                          const Divider(
+                            height: 1,
+                            color: Color(0xFF404040),
+                          ),
+                      ],
+                    );
+                  }),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             // Average times display
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -188,97 +101,177 @@ class CpuSchedulingTable extends StatelessWidget {
     );
   }
 
- Map<int, CalculatedTimes> _calculateAllTimes() {
-  Map<int, CalculatedTimes> times = {};
-  Map<int, int> startTimes = {};
-  Map<int, int> completionTimes = {};
-  int currentTime = 0;
-
-  // Calculate start and completion times from result blocks
-  for (var block in resultBlocks) {
-    // Skip idle time blocks
-    if (block.processId == -1) {
-      currentTime += block.duration;
-      continue;
-    }
-
-    // Record FIRST start time (for response time)
-    if (!startTimes.containsKey(block.processId)) {
-      startTimes[block.processId] = currentTime;
-    }
-
-    currentTime += block.duration;
-    completionTimes[block.processId] = currentTime;
-  }
-
-  // Calculate all timing parameters for each process
-  for (var process in processes) {
-    int startTime = startTimes[process.id] ?? 0;
-    int completionTime = completionTimes[process.id] ?? 0;
-
-    // FCFS Formulas:
-    // Response Time = Start Time - Arrival Time
-    int responseTime = startTime - process.arrivalTime;
-
-    // Completion Time = absolute time when process finishes
-    int ct = completionTime;
-
-    // Turnaround Time = Completion Time - Arrival Time
-    int turnaroundTime = ct - process.arrivalTime;
-
-    // Waiting Time = Turnaround Time - Burst Time
-    int waitingTime = turnaroundTime - process.executeTime;
-
-    times[process.id] = CalculatedTimes(
-      responseTime: responseTime,
-      completionTime: ct,
-      turnaroundTime: turnaroundTime,
-      waitingTime: waitingTime,
+  Widget _buildHeaderRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFF3A3A3A),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildHeaderCell('#', flex: 1),
+          _buildHeaderCell('Process ID', flex: 2),
+          _buildHeaderCell('Arrival Time', flex: 2),
+          _buildHeaderCell('Burst Time', flex: 2),
+          _buildHeaderCell('Priority', flex: 2),
+          _buildHeaderCell('Response Time', flex: 2),
+          _buildHeaderCell('TAT', flex: 2),
+          _buildHeaderCell('CT', flex: 2),
+          _buildHeaderCell('Waiting Time', flex: 2),
+        ],
+      ),
     );
   }
 
-  return times;
-}
+  Widget _buildHeaderCell(String text, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
 
-  Color _getProcessColor(int processId) {
-    final colors = [
-      Colors.pink.shade200,
-      Colors.green.shade300,
-      Colors.lightBlue.shade200,
-      Colors.purple.shade200,
-      Colors.red.shade200,
-      Colors.orange.shade200,
-      Colors.teal.shade200,
-      Colors.grey.shade400,
-    ];
-    return colors[processId % colors.length];
+  Widget _buildDataRow(
+    int index,
+    Process process,
+    CalculatedTimes times,
+    bool isEven,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: isEven 
+            ? const Color(0xFF2A2A2A) 
+            : const Color(0xFF1E1E1E),
+      ),
+      child: Row(
+        children: [
+          _buildDataCell('$index', flex: 1),
+          _buildDataCell('P${process.id}', flex: 2),
+          _buildDataCell('${process.arrivalTime}', flex: 2),
+          _buildDataCell('${process.executeTime}', flex: 2),
+          _buildDataCell(
+            process.priority > 0 ? '${process.priority}' : '-',
+            flex: 2,
+          ),
+          _buildDataCell('${times.responseTime}', flex: 2),
+          _buildDataCell('${times.turnaroundTime}', flex: 2),
+          _buildDataCell('${times.completionTime}', flex: 2),
+          _buildDataCell('${times.waitingTime}', flex: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataCell(String text, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Map<int, CalculatedTimes> _calculateAllTimes() {
+    Map<int, CalculatedTimes> times = {};
+    Map<int, int> startTimes = {};
+    Map<int, int> completionTimes = {};
+    int currentTime = 0;
+
+    // Calculate start and completion times from result blocks
+    for (var block in resultBlocks) {
+      // Skip idle time blocks
+      if (block.processId == -1) {
+        currentTime += block.duration;
+        continue;
+      }
+
+      // Record FIRST start time (for response time)
+      if (!startTimes.containsKey(block.processId)) {
+        startTimes[block.processId] = currentTime;
+      }
+
+      currentTime += block.duration;
+      completionTimes[block.processId] = currentTime;
+    }
+
+    // Calculate all timing parameters for each process
+    for (var process in processes) {
+      int startTime = startTimes[process.id] ?? 0;
+      int completionTime = completionTimes[process.id] ?? 0;
+
+      // FCFS Formulas:
+      // Response Time = Start Time - Arrival Time
+      int responseTime = startTime - process.arrivalTime;
+
+      // Completion Time = absolute time when process finishes
+      int ct = completionTime;
+
+      // Turnaround Time = Completion Time - Arrival Time
+      int turnaroundTime = ct - process.arrivalTime;
+
+      // Waiting Time = Turnaround Time - Burst Time
+      int waitingTime = turnaroundTime - process.executeTime;
+
+      times[process.id] = CalculatedTimes(
+        responseTime: responseTime,
+        completionTime: ct,
+        turnaroundTime: turnaroundTime,
+        waitingTime: waitingTime,
+      );
+    }
+
+    return times;
   }
 
   Widget _buildAverageBox(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
+        border: Border.all(color: Colors.white24),
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white,
+        color: const Color(0xFF1E1E1E),
       ),
       child: Row(
         children: [
           Text(
             '$label = ',
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
+              border: Border.all(color: Colors.white24),
               borderRadius: BorderRadius.circular(15),
+              color: const Color(0xFF2A2A2A),
             ),
             child: Text(
               value,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ),

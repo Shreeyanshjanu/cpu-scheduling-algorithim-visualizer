@@ -34,125 +34,186 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CPU Scheduling Algorithms'),
+        title: const Text(
+          'CPU Scheduling Algorithms',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFE91E63), // Pink
+                Color(0xFF9C27B0), // Purple
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Algorithm Selector
-            const Text(
-              'Algorithm:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            AlgorithmSelector(
-              selectedAlgorithm: selectedAlgorithm,
-              onAlgorithmChanged: (AlgorithmType? value) {
-                setState(() {
-                  selectedAlgorithm = value!;
-                  _calculateServiceTime();
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Process Table
-            ProcessTable(
-              processes: processes,
-              selectedAlgorithm: selectedAlgorithm,
-              onProcessChanged: () {
-                setState(() {
-                  _calculateServiceTime();
-                });
-              },
-              onAddProcess: _addProcess,
-              onDeleteProcess: _deleteProcess,
-            ),
-            const SizedBox(height: 24),
-
-            // Quantum Input (for Round Robin)
-            if (selectedAlgorithm == AlgorithmType.robin)
-              QuantumInput(
-                quantum: quantum,
-                onQuantumChanged: (value) {
+      body: Container(
+        // GRADIENT BACKGROUND
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFE91E63), // Pink
+              Color(0xFFC2185B), // Dark Pink
+              Color(0xFF9C27B0), // Purple
+              Color(0xFF7B1FA2), // Dark Purple
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.33, 0.66, 1.0],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Algorithm Selector
+              const Text(
+                'Algorithm:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              AlgorithmSelector(
+                selectedAlgorithm: selectedAlgorithm,
+                onAlgorithmChanged: (AlgorithmType? value) {
                   setState(() {
-                    quantum = value;
+                    selectedAlgorithm = value!;
+                    _calculateServiceTime();
                   });
                 },
               ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
-            // Go Button
-            Center(
-              child: ElevatedButton(
-                onPressed: _calculate,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 16,
+              // Process Table
+              ProcessTable(
+                processes: processes,
+                selectedAlgorithm: selectedAlgorithm,
+                onProcessChanged: () {
+                  setState(() {
+                    _calculateServiceTime();
+                  });
+                },
+                onAddProcess: _addProcess,
+                onDeleteProcess: _deleteProcess,
+              ),
+              const SizedBox(height: 24),
+
+              // Quantum Input (for Round Robin)
+              if (selectedAlgorithm == AlgorithmType.robin)
+                QuantumInput(
+                  quantum: quantum,
+                  onQuantumChanged: (value) {
+                    setState(() {
+                      quantum = value;
+                    });
+                  },
+                ),
+              const SizedBox(height: 16),
+
+              // Go Button
+              Center(
+                child: ElevatedButton(
+                  onPressed: _calculate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF9C27B0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 64,
+                      vertical: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 8,
+                    shadowColor: Colors.black.withOpacity(0.3),
+                  ),
+                  child: const Text(
+                    'Go',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
-                child: const Text('Go', style: TextStyle(fontSize: 18)),
               ),
-            ),
-            // Result Display - Show for FCFS and SJF
-            if (showResult &&
-                (selectedAlgorithm == AlgorithmType.fcfs ||
-                    selectedAlgorithm == AlgorithmType.sjf))
-              Column(
-                children: [
-                  // CPU Scheduling Table
-                  CpuSchedulingTable(
-                    processes: processes,
-                    resultBlocks: resultBlocks,
-                  ),
-                  const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-                  // Original Result Display
-                  ResultDisplay(
-                    resultBlocks: resultBlocks,
-                    animationProgress: animationProgress,
-                    currentTimer: currentTimer,
-                  ),
-                  const SizedBox(height: 24),
+              // Result Display - HORIZONTAL SCROLL
+              if (showResult)
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section 1: CPU Scheduling Table
+                        SizedBox(
+                          width: 800,
+                          child: CpuSchedulingTable(
+                            processes: processes,
+                            resultBlocks: resultBlocks,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
 
-                  // Gantt Chart
-                  GanttChartWidget(resultBlocks: resultBlocks),
-                  const SizedBox(height: 24),
+                        // Section 2: Result Display & Gantt Chart
+                        SizedBox(
+                          width: 700,
+                          child: Column(
+                            children: [
+                              ResultDisplay(
+                                resultBlocks: resultBlocks,
+                                animationProgress: animationProgress,
+                                currentTimer: currentTimer,
+                              ),
+                              const SizedBox(height: 24),
+                              GanttChartWidget(resultBlocks: resultBlocks),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
 
-                  // Bar Chart
-                  BarChartWidget(
-                    processes: processes,
-                    resultBlocks: resultBlocks,
-                  ),
-                  const SizedBox(height: 24),
+                        // Section 3: Bar Chart
+                        SizedBox(
+                          width: 700,
+                          child: BarChartWidget(
+                            processes: processes,
+                            resultBlocks: resultBlocks,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
 
-                  // Line Chart
-                  LineChartWidget(
-                    processes: processes,
-                    resultBlocks: resultBlocks,
+                        // Section 4: Line Chart
+                        SizedBox(
+                          width: 700,
+                          child: LineChartWidget(
+                            processes: processes,
+                            resultBlocks: resultBlocks,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                      ],
+                    ),
                   ),
-                ],
-              )
-            else if (showResult)
-              Column(
-                children: [
-                  CpuSchedulingTable(
-                    processes: processes,
-                    resultBlocks: resultBlocks,
-                  ),
-                  const SizedBox(height: 24),
-                  ResultDisplay(
-                    resultBlocks: resultBlocks,
-                    animationProgress: animationProgress,
-                    currentTimer: currentTimer,
-                  ),
-                ],
-              ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -164,7 +225,7 @@ class _HomePageState extends State<HomePage> {
       processes.add(
         Process(
           id: newId,
-          arrivalTime: 0, // User can now edit this
+          arrivalTime: 0,
           executeTime: 0,
           priority: 0,
         ),

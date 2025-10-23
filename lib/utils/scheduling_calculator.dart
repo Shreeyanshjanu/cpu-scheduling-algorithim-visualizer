@@ -97,7 +97,8 @@ class SchedulingCalculator {
               // CPU idle, find next arriving process
               int nextArrival = double.maxFinite.toInt();
               for (int i = 0; i < allProcesses.length; i++) {
-                if (!completed[i] && allProcesses[i].arrivalTime > currentTime) {
+                if (!completed[i] &&
+                    allProcesses[i].arrivalTime > currentTime) {
                   if (allProcesses[i].arrivalTime < nextArrival) {
                     nextArrival = allProcesses[i].arrivalTime;
                   }
@@ -156,7 +157,8 @@ class SchedulingCalculator {
               // CPU idle, find next arriving process
               int nextArrival = double.maxFinite.toInt();
               for (int i = 0; i < allProcesses.length; i++) {
-                if (!completed[i] && allProcesses[i].arrivalTime > currentTime) {
+                if (!completed[i] &&
+                    allProcesses[i].arrivalTime > currentTime) {
                   if (allProcesses[i].arrivalTime < nextArrival) {
                     nextArrival = allProcesses[i].arrivalTime;
                   }
@@ -190,33 +192,85 @@ class SchedulingCalculator {
         }
 
       case AlgorithmType.robin:
-        List<Process> sortedByArrival = List.from(processes);
-        sortedByArrival.sort((a, b) => a.arrivalTime.compareTo(b.arrivalTime));
+        {
+          // Sort by arrival time
+          List<Process> sortedByArrival = List.from(processes);
+          sortedByArrival.sort(
+            (a, b) => a.arrivalTime.compareTo(b.arrivalTime),
+          );
 
-        List<int> remainingTimes =
-            sortedByArrival.map((p) => p.executeTime).toList();
-        bool allDone = false;
+          // Track remaining times and last execution time
+          List<int> remainingTimes = sortedByArrival
+              .map((p) => p.executeTime)
+              .toList();
 
-        while (!allDone) {
-          allDone = true;
-          for (int i = 0; i < sortedByArrival.length; i++) {
-            if (remainingTimes[i] > 0) {
-              int executionTime =
-                  remainingTimes[i] > quantum ? quantum : remainingTimes[i];
+          int currentTime = 0;
+          List<int> readyQueue = [];
+          int processIndex = 0;
+          bool allComplete = false;
 
-              blocks.add(
-                ResultBlock(
-                  processId: sortedByArrival[i].id,
-                  duration: executionTime,
-                ),
-              );
-
-              remainingTimes[i] -= executionTime;
-              allDone = false;
+          while (!allComplete) {
+            // Add newly arrived processes to ready queue
+            while (processIndex < sortedByArrival.length &&
+                sortedByArrival[processIndex].arrivalTime <= currentTime) {
+              if (remainingTimes[processIndex] > 0) {
+                readyQueue.add(processIndex);
+              }
+              processIndex++;
             }
+
+            if (readyQueue.isEmpty) {
+              // CPU idle - jump to next process arrival
+              if (processIndex < sortedByArrival.length) {
+                int nextArrival = sortedByArrival[processIndex].arrivalTime;
+                blocks.add(
+                  ResultBlock(
+                    processId: -1,
+                    duration: nextArrival - currentTime,
+                  ),
+                );
+                currentTime = nextArrival;
+              } else {
+                allComplete = true;
+              }
+              continue;
+            }
+
+            // Execute first process in ready queue
+            int idx = readyQueue.removeAt(0);
+            int executionTime = remainingTimes[idx] > quantum
+                ? quantum
+                : remainingTimes[idx];
+
+            blocks.add(
+              ResultBlock(
+                processId: sortedByArrival[idx].id,
+                duration: executionTime,
+              ),
+            );
+
+            currentTime += executionTime;
+            remainingTimes[idx] -= executionTime;
+
+            // Add newly arrived processes to ready queue (arrived during execution)
+            while (processIndex < sortedByArrival.length &&
+                sortedByArrival[processIndex].arrivalTime <= currentTime) {
+              if (remainingTimes[processIndex] > 0) {
+                readyQueue.add(processIndex);
+              }
+              processIndex++;
+            }
+
+            // If process still has remaining time, add back to queue
+            if (remainingTimes[idx] > 0) {
+              readyQueue.add(idx);
+            }
+
+            // Check if all processes are complete
+            allComplete = remainingTimes.every((rt) => rt == 0);
           }
+          break;
         }
-        break;
     }
 
     return blocks;

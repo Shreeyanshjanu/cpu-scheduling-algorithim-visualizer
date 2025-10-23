@@ -21,21 +21,30 @@ class BarChartWidget extends StatelessWidget {
     List<int> executionOrder = _getExecutionOrder();
 
     return Card(
+      color: const Color(0xFF2D2D2D),
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'FCFS Scheduling - Time Metrics Comparison',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             _buildLegend(),
             const SizedBox(height: 24),
             SizedBox(
-              height: 350,
+              height: 400,
               child: BarChart(_buildBarChartData(processTimes, executionOrder)),
             ),
           ],
@@ -118,6 +127,14 @@ class BarChartWidget extends StatelessWidget {
       barTouchData: BarTouchData(
         enabled: true,
         touchTooltipData: BarTouchTooltipData(
+          // FIXED: Changed from tooltipBgColor to getTooltipColor
+          getTooltipColor: (group) => const Color(0xFF1E1E1E),
+          tooltipBorder: const BorderSide(
+            color: Color(0xFF404040),
+            width: 1,
+          ),
+          tooltipRoundedRadius: 8,
+          tooltipPadding: const EdgeInsets.all(8),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             String metric = '';
             switch (rodIndex) {
@@ -136,7 +153,11 @@ class BarChartWidget extends StatelessWidget {
             }
             return BarTooltipItem(
               '$metric\n${rod.toY.toInt()}',
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             );
           },
         ),
@@ -146,7 +167,9 @@ class BarChartWidget extends StatelessWidget {
         rightTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
@@ -158,8 +181,9 @@ class BarChartWidget extends StatelessWidget {
                   child: Text(
                     'P${executionOrder[index]}',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white70,
                     ),
                   ),
                 );
@@ -176,19 +200,31 @@ class BarChartWidget extends StatelessWidget {
             getTitlesWidget: (value, meta) {
               return Text(
                 value.toInt().toString(),
-                style: const TextStyle(fontSize: 10),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.white70,
+                ),
               );
             },
           ),
         ),
       ),
-      borderData: FlBorderData(show: false),
+      borderData: FlBorderData(
+        show: true,
+        border: const Border(
+          left: BorderSide(color: Color(0xFF404040), width: 1),
+          bottom: BorderSide(color: Color(0xFF404040), width: 1),
+        ),
+      ),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: 2,
         getDrawingHorizontalLine: (value) {
-          return FlLine(color: Colors.grey.shade300, strokeWidth: 1);
+          return const FlLine(
+            color: Color(0xFF404040),
+            strokeWidth: 1,
+          );
         },
       ),
       barGroups: executionOrder.asMap().entries.map((entry) {
@@ -202,8 +238,8 @@ class BarChartWidget extends StatelessWidget {
             // Completion Time - Cyan
             BarChartRodData(
               toY: times.completionTime.toDouble(),
-              color: Colors.cyan,
-              width: 12,
+              color: const Color(0xFF00BCD4),
+              width: 14,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -212,28 +248,28 @@ class BarChartWidget extends StatelessWidget {
             // Turnaround Time - Red
             BarChartRodData(
               toY: times.turnaroundTime.toDouble(),
-              color: Colors.red,
-              width: 12,
+              color: const Color(0xFFFF5252),
+              width: 14,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
               ),
             ),
-            // Waiting Time - Teal/Green
+            // Waiting Time - Green
             BarChartRodData(
               toY: times.waitingTime.toDouble(),
-              color: Colors.teal,
-              width: 12,
+              color: const Color(0xFF4CAF50),
+              width: 14,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
               ),
             ),
-            // Response Time - Dark Gray
+            // Response Time - Purple
             BarChartRodData(
               toY: times.responseTime.toDouble(),
-              color: Colors.grey.shade700,
-              width: 12,
+              color: const Color(0xFF9C27B0),
+              width: 14,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -260,16 +296,27 @@ class BarChartWidget extends StatelessWidget {
   }
 
   Widget _buildLegend() {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 16,
-      runSpacing: 8,
-      children: [
-        _buildLegendItem('Completion', Colors.cyan),
-        _buildLegendItem('Turnaround', Colors.red),
-        _buildLegendItem('Waiting', Colors.teal),
-        _buildLegendItem('Response', Colors.grey.shade700),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF404040),
+          width: 1,
+        ),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 20,
+        runSpacing: 12,
+        children: [
+          _buildLegendItem('Completion', const Color(0xFF00BCD4)),
+          _buildLegendItem('Turnaround', const Color(0xFFFF5252)),
+          _buildLegendItem('Waiting', const Color(0xFF4CAF50)),
+          _buildLegendItem('Response', const Color(0xFF9C27B0)),
+        ],
+      ),
     );
   }
 
@@ -278,17 +325,21 @@ class BarChartWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 16,
-          height: 16,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(3),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.white70,
+          ),
         ),
       ],
     );
